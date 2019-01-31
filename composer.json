@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "silverstripe/framework": "^4@dev",        
+        "silverstripe/framework": "^4@dev",
         "silverstripe/vendor-plugin": "^1.0",
         "superbalist/flysystem-google-storage": "^7.1",
         "league/flysystem-cached-adapter": "^1.0"
@@ -19,5 +19,5 @@
         "psr-4": {
             "SilverStripe\\GoogleCloudStorage\\": "src/"
         }
-    },
+    }
 }
