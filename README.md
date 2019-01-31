@@ -5,6 +5,8 @@ SilverStripe module to store assets in Google Cloud Storage rather than on the l
 Note: This is a pre-release module, and does not currently implement any kind of
 bucket policy for protected assets.
 
+This is based primarily off of https://github.com/silverstripe/silverstripe-s3
+
 ## Environment setup
 
 The module requires a few environment variables to be set. These are mandatory.
