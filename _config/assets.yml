@@ -1,0 +1,63 @@
+---
+Name: silverstripegooglecloudstorage-flysystem
+Only:
+  envvarset: GC_BUCKET_NAME
+After:
+  - '#assetsflysystem'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter:
+    constructor:
+      bucket: '`GC_BUCKET_NAME`'
+      projectId: '`GC_PROJECT_ID`'
+      keyFilePath: '`GOOGLE_APPLICATION_CREDENTIALS`'
+
+  League\Flysystem\Adapter\Local:
+    class: League\Flysystem\Adapter\Local
+    constructor:
+      root: '`TEMP_PATH`'
+
+  SilverStripe\GoogleCloudStorage\Adapter\PublicAdapter:
+    constructor:
+      bucketAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter'
+      prefix: '`GC_PUBLIC_BUCKET_PREFIX`'
+  League\Flysystem\Cached\Storage\Memory.public:
+    class: League\Flysystem\Cached\Storage\Memory
+  League\Flysystem\Cached\Storage\Adapter.public:
+    class: League\Flysystem\Cached\Storage\Adapter
+    constructor:
+      adapter: '%$League\Flysystem\Adapter\Local'
+      file: 'gcmetadata/public'
+      expire: 259200
+  SilverStripe\Assets\Flysystem\PublicAdapter:
+    class: SilverStripe\GoogleCloudStorage\Adapter\PublicCachedAdapter
+    constructor:
+      adapter: '%$SilverStripe\GoogleCloudStorage\Adapter\PublicAdapter'
+      cache: '%$League\Flysystem\Cached\Storage\Adapter.public'
+
+  SilverStripe\GoogleCloudStorage\Adapter\ProtectedAdapter:
+    constructor:
+      bucketAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter'
+      prefix: '`GC_PROTECTED_BUCKET_PREFIX`'
+  League\Flysystem\Cached\Storage\Adapter.protected:
+      class: League\Flysystem\Cached\Storage\Adapter
+      constructor:
+        adapter: '%$League\Flysystem\Adapter\Local'
+        file: 'gcmetadata/protected'
+        expire: 259200
+  SilverStripe\Assets\Flysystem\ProtectedAdapter:
+    class: SilverStripe\GoogleCloudStorage\Adapter\ProtectedCachedAdapter
+    constructor:
+      adapter: '%$SilverStripe\GoogleCloudStorage\Adapter\ProtectedAdapter'
+      cache: '%$League\Flysystem\Cached\Storage\Adapter.protected'
+#---
+Name: silverstripegooglecloudstorage-assetscore
+Only:
+  envvarset: GC_BUCKET_NAME
+After:
+  - '#assetscore'
+---
+SilverStripe\Core\Injector\Injector:
+  # Define our SS asset backend
+  SilverStripe\Assets\Storage\AssetStore:
+    class: SilverStripe\Assets\Flysystem\FlysystemAssetStore

@@ -1,0 +1,10 @@
+---
+Name: silverstripegooglecloudstorage-assetadmin
+Only:
+  moduleexists: silverstripe/asset-admin
+---
+# Ensure we use links and not inline thumbnails for all gc assets
+SilverStripe\AssetAdmin\Model\ThumbnailGenerator:
+  thumbnail_links:
+    protected: url
+    public: url

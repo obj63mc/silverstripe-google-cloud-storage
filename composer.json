@@ -1,0 +1,23 @@
+{
+    "name": "obj63mc/silverstripe-google-cloud-storage",
+    "description": "SilverStripe module to store assets in Google Cloud Storage rather than on the local filesystem.",
+    "type": "silverstripe-vendormodule",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Joe Madden",
+            "email": "obj63mc@gmail.com"
+        }
+    ],
+    "require": {
+        "silverstripe/framework": "^4@dev",        
+        "silverstripe/vendor-plugin": "^1.0",
+        "superbalist/flysystem-google-storage": "^7.1",
+        "league/flysystem-cached-adapter": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SilverStripe\\GoogleCloudStorage\\": "src/"
+        }
+    },
+}
