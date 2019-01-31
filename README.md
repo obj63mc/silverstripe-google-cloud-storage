@@ -23,15 +23,14 @@ If running outside of google app engine or cloud compute, you need to setup your
 
 * Define the environment variables listed above.
 * [Install Composer from https://getcomposer.org](https://getcomposer.org/download/)
-* Run `composer require ... @TODO`
+* Run `composer require obj63mc/silverstripe-google-cloud-storage`
 
 This will install the most recent applicable version of the module given your other Composer
 requirements.
 
 **Note:** This currently immediately replaces the built-in local asset store that comes with
 SilverStripe with one based on Google Cloud Storage. Any files that had previously been uploaded to an existing
-asset store will be unavailable (though they won't be lost - just run `composer remove
-silverstripe/ ... @TODO` to remove the module and restore access).
+asset store will be unavailable (though they won't be lost - just run `composer remove obj63mc/silverstripe-google-cloud-storage` to remove the module and restore access).
 
 ## Configuration
 
