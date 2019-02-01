@@ -33,6 +33,15 @@ class ProtectedAdapter extends GoogleStorageAdapter implements SilverstripeProte
      */
     public function getProtectedUrl($path)
     {
-        return $this->getUrl($path);
+        $object = $this->getObject($path);
+        $signedUrl = $object->signedUrl(date_create('+1 day'), []);
+        if ($this->getStorageApiUri() !== self::STORAGE_API_URI_DEFAULT) {
+            if (!isset($options['cname'])) {
+                list($url, $params) = explode('?', $signedUrl, 2);
+                $signedUrl = $this->getUrl($path) . '?' . $params;
+            }
+        }
+
+        return $signedUrl;
     }
 }

@@ -2,10 +2,10 @@
 
 SilverStripe module to store assets in Google Cloud Storage rather than on the local filesystem.
 
-Note: This is a pre-release module, and does not currently implement any kind of
-bucket policy for protected assets.
+Note: This is a pre-release, and does not implement any kind of
+bucket policy for protected assets.  There is an example ACL for public/protected assets [here](./acl-examples.md)
 
-This is based primarily off of https://github.com/silverstripe/silverstripe-s3
+This was initially based off of https://github.com/silverstripe/silverstripe-s3
 
 ## Environment setup
 
@@ -14,7 +14,7 @@ The module requires a few environment variables to be set. These are mandatory.
 * `GC_PROJECT_ID`: Your google project id
 * `GC_BUCKET_NAME`: The name of the cloud storage bucket bucket to store assets in.
 
-If running outside of google app engine or cloud compute, you need to setup your user credentials by placing a service account key json file in the root of your site that has access to Google Cloud Storage JSON API. Then simply setup the environment variable of GOOGLE_APPLICATION_CREDENTIALS, example -
+If running outside of google app engine or cloud compute, you need to setup your user credentials by placing a service account key json file in the root of your site.  This service account key will need access to Google Cloud Storage JSON API. Once the service account key is in the root of your site, simply add an environment variable of GOOGLE_APPLICATION_CREDENTIALS, example -
 
 * `GOOGLE_APPLICATION_CREDENTIALS`: 'service-account.json'
 
@@ -38,22 +38,39 @@ Assets are classed as either 'public' or 'protected' by SilverStripe. Public ass
 freely downloaded, whereas protected assets (e.g. assets not yet published) shouldn't be
 directly accessed.
 
-Currently the FlySystem adapter for google cloud storage does not implement Signed URLs.  
-Due to Signed URLs not being implemented there is not a way to actually protect the unpublished assets.  If your site has protected files I would not recommend this module.
+'public' assets are stored by default in a directory called 'public' in the root of your bucket.  If you would like to change this prefix/path simply update the environment variable of `GC_PUBLIC_BUCKET_PREFIX`.  You will want to configure this folder and any assets under it to have an ACL that anyone can read.
+
+'protected' assets are stored by default in a directory called 'protected' in the root of your bucket.  If you would like to change this prefix/path simply update the environment variable of `GC_PROTECTED_BUCKET_PREFIX`.  You will want to configure this folder to be private and only your google project admins and the account service key have admin access.
 
 ## Configuring Google Cloud Storage Bucket
 
-It is recommended to set the bucket to be public so files can be accessed on your website.  To do so add a permission for the 'allUsers' user with
-* Storage Object Viewer
-* Storage Legacy Bucket Reader
-* Storage Legacy Object Reader
+This is an example for setting up your Google Cloud Storage Bucket.  This assumes you have Google Cloud SDK and command line tools installed. https://cloud.google.com/storage/docs/quickstart-gsutil
 
-If you are using a service account key json file, you also need to make sure that user has the following permissions -
-* Storage Admin
-* Storage Legacy Bucket Owner
+1. Create the Bucket - `gsutil mb gs://[BUCKET_NAME]/`
+2. Get the default ACL, you will need the project id from the ACL `gsutil acl get gs://[BUCKET_NAME]/`
+3. Set the bucket so your service account key can access the bucket (note only needed if not running on google app engine or cloud compute).  Replace [YOUR_ACCOUNT_NAME]/the email address with your service account key email address.
 
-Also make sure the service account key json user has access to the Cloud Storage JSON API - this can be enabled through 'APIs & Services >> Library' section of your Google Cloud Console.
+        gsutil defacl ch -u gcloud-[YOUR_ACCOUNT_NAME]@appspot.gserviceaccount.com:OWNER gs://[BUCKET_NAME]
+        gsutil acl ch -u gcloud-[YOUR_ACCOUNT_NAME]@appspot.gserviceaccount.com:OWNER gs://[BUCKET_NAME]
+4. Lets create the 'public' folder and set it so anyone can read it.
 
-It may also be useful to set all objects to be publicly readable when created - to do so you can run the following on  your command line -
+        touch test.txt
+        gsutil cp test.txt gs://[BUCKET_NAME]/public
+        gsutil acl ch -r -u AllUsers:R gs://[BUCKET_NAME]/public
 
-		gsutil defacl ch -u AllUsers:R gs://{your bucket name}
+Your bucket should now be configured and have proper protected/public folders for your assets.
+
+## Auto Generated Assets from the CMS (Tinymce.js/Error Pages)
+
+### TinyMCE
+Currently anytime you run a flush on your site and access the CMS, new versions of tinymce code and other JS may be outputted to your assets directory.  Instead of referencing these from your cloud storage, this module now includes an adapter to make sure this stays on the local filesystem as intended.
+
+### ErrorPages - currently error pages static files will be uploaded to GCS.  Due to this you would need to update the path that these are generated to by editing your main sites config .yml file, default set from this project is:
+
+        SilverStripe\ErrorPage\ErrorPage:
+            store_filepath: 'error-pages'
+
+You can also turn off the static file generation via -
+
+        SilverStripe\ErrorPage\ErrorPage:
+          enable_static_file: false

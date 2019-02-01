@@ -61,3 +61,12 @@ SilverStripe\Core\Injector\Injector:
   # Define our SS asset backend
   SilverStripe\Assets\Storage\AssetStore:
     class: SilverStripe\Assets\Flysystem\FlysystemAssetStore
+Name: silverstripegooglecloudstorage-errorpage
+Only:
+  envvarset: GC_BUCKET_NAME
+After:
+  - '#errorpage-extensions'
+---
+SilverStripe\ErrorPage\ErrorPage:
+  store_filepath: 'error-pages'
+#---
