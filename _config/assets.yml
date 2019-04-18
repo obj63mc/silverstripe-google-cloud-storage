@@ -1,7 +1,9 @@
 ---
 Name: silverstripegooglecloudstorage-flysystem
 Only:
-  envvarset: GC_BUCKET_NAME
+  envvarset:
+    - GC_BUCKET_NAME
+    - GC_KEY_FILE
 After:
   - '#assetsflysystem'
 ---
@@ -9,8 +11,7 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter:
     constructor:
       bucket: '`GC_BUCKET_NAME`'
-      projectId: '`GC_PROJECT_ID`'
-      keyFilePath: '`GOOGLE_APPLICATION_CREDENTIALS`'
+      keyFile: '`GC_KEY_FILE`'
 
   League\Flysystem\Adapter\Local:
     class: League\Flysystem\Adapter\Local

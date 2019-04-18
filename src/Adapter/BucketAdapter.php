@@ -7,11 +7,12 @@ use Google\Cloud\Storage\StorageClient;
 class BucketAdapter {
     protected $bucket;
     protected $client;
-    public function __construct($bucketname, $projectId, $keyFilePath){
+    public function __construct($bucketname, $keyFile){
         $this->client = new StorageClient([
-            'projectId'=>$projectId,
-            'keyFilePath' => BASE_PATH.'/'.$keyFilePath
+            'keyFile'=> json_decode($keyFile, true)
         ]);
+
+
         $this->bucket = $this->client->bucket($bucketname);
     }
 

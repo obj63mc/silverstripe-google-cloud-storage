@@ -11,13 +11,13 @@ This was initially based off of https://github.com/silverstripe/silverstripe-s3
 
 The module requires a few environment variables to be set. These are mandatory.
 
-* `GC_PROJECT_ID`: Your google project id
+* `GC_KEY_FILE`: JSON of your google service account json file
 * `GC_BUCKET_NAME`: The name of the cloud storage bucket bucket to store assets in.
 
-If running outside of google app engine or cloud compute, you need to setup your user credentials by placing a service account key json file in the root of your site.  This service account key will need access to Google Cloud Storage JSON API. Once the service account key is in the root of your site, simply add an environment variable of GOOGLE_APPLICATION_CREDENTIALS, example -
 
-* `GOOGLE_APPLICATION_CREDENTIALS`: 'service-account.json'
+For the GC_KEY_FILE environment variable, simply copy all contents into one line and place in your .env file like -
 
+        GOOGLE_KEY_FILE={"type": "service_account","project_id": ...
 
 ## Installation
 
