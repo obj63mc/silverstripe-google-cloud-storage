@@ -13,55 +13,87 @@ SilverStripe\Core\Injector\Injector:
       bucket: '`GC_BUCKET_NAME`'
       keyFile: '`GC_KEY_FILE`'
 
-  League\Flysystem\Adapter\Local:
-    class: League\Flysystem\Adapter\Local
-    constructor:
-      root: '`TEMP_PATH`'
-
   SilverStripe\GoogleCloudStorage\Adapter\PublicAdapter:
     constructor:
       bucketAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter'
       prefix: '`GC_PUBLIC_BUCKET_PREFIX`'
-  League\Flysystem\Cached\Storage\Memory.public:
-    class: League\Flysystem\Cached\Storage\Memory
-  League\Flysystem\Cached\Storage\Adapter.public:
-    class: League\Flysystem\Cached\Storage\Adapter
+  Symfony\Component\Cache\Adapter\FilesystemAdapter.public:
+    class: Symfony\Component\Cache\Adapter\FilesystemAdapter
     constructor:
-      adapter: '%$League\Flysystem\Adapter\Local'
-      file: 'gcmetadata/public'
-      expire: 259200
+      namespace: 'flysystem-public'
+      expire: 2592000
   SilverStripe\Assets\Flysystem\PublicAdapter:
     class: SilverStripe\GoogleCloudStorage\Adapter\PublicCachedAdapter
     constructor:
       adapter: '%$SilverStripe\GoogleCloudStorage\Adapter\PublicAdapter'
-      cache: '%$League\Flysystem\Cached\Storage\Adapter.public'
+      cache: '%$Symfony\Component\Cache\Adapter\FilesystemAdapter.public'
+  League\Flysystem\Filesystem.public:
+    class: SilverStripe\Assets\Flysystem\Filesystem
+    constructor:
+      FilesystemAdapter: '%$SilverStripe\Assets\Flysystem\PublicAdapter'
+      FilesystemConfig:
+        visibility: public
 
   SilverStripe\GoogleCloudStorage\Adapter\ProtectedAdapter:
     constructor:
       bucketAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter'
       prefix: '`GC_PROTECTED_BUCKET_PREFIX`'
-  League\Flysystem\Cached\Storage\Adapter.protected:
-      class: League\Flysystem\Cached\Storage\Adapter
-      constructor:
-        adapter: '%$League\Flysystem\Adapter\Local'
-        file: 'gcmetadata/protected'
-        expire: 259200
+  Symfony\Component\Cache\Adapter\FilesystemAdapter.protected:
+    class: Symfony\Component\Cache\Adapter\FilesystemAdapter
+    constructor:
+      namespace: 'flysystem-protected'
+      expire: 2592000
   SilverStripe\Assets\Flysystem\ProtectedAdapter:
     class: SilverStripe\GoogleCloudStorage\Adapter\ProtectedCachedAdapter
     constructor:
       adapter: '%$SilverStripe\GoogleCloudStorage\Adapter\ProtectedAdapter'
-      cache: '%$League\Flysystem\Cached\Storage\Adapter.protected'
-#---
+      cache: '%$Symfony\Component\Cache\Adapter\FilesystemAdapter.protected'
+  League\Flysystem\Filesystem.protected:
+    class: SilverStripe\Assets\Flysystem\Filesystem
+    constructor:
+      FilesystemAdapter: '%$SilverStripe\Assets\Flysystem\ProtectedAdapter'
+      FilesystemConfig:
+        visibility: private
+---
 Name: silverstripegooglecloudstorage-assetscore
 Only:
   envvarset: GC_BUCKET_NAME
 After:
+  - '#assetsflysystem'
   - '#assetscore'
 ---
 SilverStripe\Core\Injector\Injector:
   # Define our SS asset backend
   SilverStripe\Assets\Storage\AssetStore:
     class: SilverStripe\Assets\Flysystem\FlysystemAssetStore
+    properties:
+      PublicFilesystem: '%$League\Flysystem\Filesystem.public'
+      ProtectedFilesystem: '%$League\Flysystem\Filesystem.protected'
+  SilverStripe\Assets\Storage\GeneratedAssetHandler:
+    class: SilverStripe\Assets\Flysystem\GeneratedAssets
+    properties:
+      Filesystem: '%$League\Flysystem\Filesystem.public'
+  SilverStripe\View\Requirements_Backend:
+    properties:
+      AssetHandler: '%$SilverStripe\Assets\Storage\GeneratedAssetHandler'
+
+---
+Name: silverstripegooglecloudstorage-cdn
+Only:
+  envvarset: GC_PUBLIC_CDN_PREFIX
+After:
+  - '#assetsflysystem'
+  - '#silverstripegooglecloudstorage-flysystem'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GoogleCloudStorage\Adapter\PublicAdapter:
+    class: SilverStripe\GoogleCloudStorage\Adapter\PublicCDNAdapter
+    constructor:
+      bucketAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter'
+      prefix: '`GC_PUBLIC_BUCKET_PREFIX`'
+      cdnPrefix: '`GC_PUBLIC_CDN_PREFIX`'
+
+---
 Name: silverstripegooglecloudstorage-errorpage
 Only:
   envvarset: GC_BUCKET_NAME
@@ -70,4 +102,4 @@ After:
 ---
 SilverStripe\ErrorPage\ErrorPage:
   store_filepath: 'error-pages'
-#---
+---
