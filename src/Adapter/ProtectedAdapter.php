@@ -2,19 +2,28 @@
 
 namespace SilverStripe\GoogleCloudStorage\Adapter;
 
-use Google\Cloud\Storage\StorageClient;
 use InvalidArgumentException;
-use Superbalist\Flysystem\GoogleStorage\GoogleStorageAdapter;
+use League\Flysystem\Config;
+use League\Flysystem\GoogleCloudStorage\GoogleCloudStorageAdapter;
+use League\Flysystem\GoogleCloudStorage\VisibilityHandler;
+use League\Flysystem\Visibility;
+use League\MimeTypeDetection\MimeTypeDetector;
 use SilverStripe\Assets\Flysystem\ProtectedAdapter as SilverstripeProtectedAdapter;
-
 /**
  * An adapter that allows the use of Google Cloud Storage to store and transmit assets rather than storing them locally.
  */
 class ProtectedAdapter extends GoogleStorageAdapter implements SilverstripeProtectedAdapter
 {
 
+    /**
+     * Pre-signed request expiration time in seconds, or relative string
+     *
+     * @var int|string
+     */
+    protected $expiry = 300;
 
-    public function __construct(BucketAdapter $bucketAdapter, $prefix = null, $storageApiUri = null)
+
+    public function __construct(BucketAdapter $bucketAdapter, $prefix = null, VisibilityHandler $visibilityHandler = null, private string $defaultVisibility = Visibility::PRIVATE, MimeTypeDetector $mimeTypeDetector = null)
     {
         if (!$bucketAdapter) {
             throw new InvalidArgumentException("GC_BUCKET_NAME environment variable not set");
@@ -22,9 +31,29 @@ class ProtectedAdapter extends GoogleStorageAdapter implements SilverstripeProte
         if (!$prefix) {
             $prefix = 'protected';
         }
-        parent::__construct($bucketAdapter->getClient(), $bucketAdapter->getBucket(), $prefix, $storageApiUri);
+        parent::__construct($bucketAdapter->getBucket(), $prefix, $defaultVisibility, $mimeTypeDetector);
     }
 
+    /**
+     * @return int|string
+     */
+    public function getExpiry()
+    {
+        return $this->expiry;
+    }
+
+    /**
+     * Set expiry. Supports either number of seconds (in int) or
+     * a literal relative string.
+     *
+     * @param int|string $expiry
+     * @return $this
+     */
+    public function setExpiry($expiry)
+    {
+        $this->expiry = $expiry;
+        return $this;
+    }
 
     /**
      * @param string $path
@@ -33,15 +62,19 @@ class ProtectedAdapter extends GoogleStorageAdapter implements SilverstripeProte
      */
     public function getProtectedUrl($path)
     {
-        $object = $this->getObject($path);
-        $signedUrl = $object->signedUrl(date_create('+1 day'), []);
-        if ($this->getStorageApiUri() !== self::STORAGE_API_URI_DEFAULT) {
-            if (!isset($options['cname'])) {
-                list($url, $params) = explode('?', $signedUrl, 2);
-                $signedUrl = $this->getUrl($path) . '?' . $params;
-            }
+        $dt = new \DateTime();
+        if(is_string($this->getExpiry())){
+            $dt = $dt->setTimestamp(strtotime($this->getExpiry()));
+        } else {
+            $dt = $dt->setTimestamp(strtotime('+'.$this->getExpiry().' seconds'));
         }
 
-        return $signedUrl;
+        return $this->temporaryUrl($path, $dt, new Config());
+    }
+
+    public function getVisibility($path)
+    {
+        // Save an API call
+        return ['path' => $path, 'visibility' => self::VISIBILITY_PRIVATE];
     }
 }
