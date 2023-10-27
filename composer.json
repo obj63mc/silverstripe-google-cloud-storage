@@ -4,17 +4,11 @@
     "type": "silverstripe-vendormodule",
     "license": "MIT",
     "authors": [],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:wedevelopnl/flysystem-cache-adapter.git"
-        }
-    ],
     "require": {
         "silverstripe/framework": "^5",
         "silverstripe/vendor-plugin": "^2",
         "league/flysystem-google-cloud-storage": "^3.16.0",
-        "jgivoni/flysystem-cache-adapter": "dev-bugfix/remove-array-caching"
+        "jgivoni/flysystem-cache-adapter": "^3.0.4"
     },
     "autoload": {
         "psr-4": {
