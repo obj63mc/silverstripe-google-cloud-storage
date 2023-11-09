@@ -9,7 +9,7 @@ class BucketAdapter {
     protected $client;
     public function __construct($bucketname, $keyFile){
         $this->client = new StorageClient([
-            'keyFile'=> json_decode($keyFile, true)
+            'keyFile'=> json_decode($keyFile, true),
         ]);
 
 

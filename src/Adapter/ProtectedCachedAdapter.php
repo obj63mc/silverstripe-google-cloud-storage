@@ -2,13 +2,13 @@
 
 namespace SilverStripe\GoogleCloudStorage\Adapter;
 
-use League\Flysystem\Cached\CachedAdapter;
+use jgivoni\Flysystem\Cache\CacheAdapter;
 use SilverStripe\Assets\Flysystem\ProtectedAdapter;
 
-class ProtectedCachedAdapter extends CachedAdapter implements ProtectedAdapter
+class ProtectedCachedAdapter extends CacheAdapter implements ProtectedAdapter
 {
     public function getProtectedUrl($path)
     {
-        return $this->getAdapter()->getProtectedUrl($path);
+        return $this->adapter->getProtectedUrl($path);
     }
 }
