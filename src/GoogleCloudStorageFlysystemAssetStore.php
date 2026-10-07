@@ -9,6 +9,7 @@ use SilverStripe\Assets\Flysystem\Filesystem;
 use SilverStripe\Assets\Flysystem\FlysystemAssetStore as BaseFlysystemAssetStore;
 use SilverStripe\Assets\File;
 use SilverStripe\Assets\Storage\AssetStore;
+use SilverStripe\GoogleCloudStorage\Adapter\CachedGoogleCloudStorageAdapter;
 use SilverStripe\Versioned\Versioned;
 
 class GoogleCloudStorageFlysystemAssetStore extends BaseFlysystemAssetStore
@@ -182,6 +183,26 @@ class GoogleCloudStorageFlysystemAssetStore extends BaseFlysystemAssetStore
         $publicAdapter = $public->getAdapter();
 
         return $publicAdapter->getPublicUrl($fileID);
+    }
+
+
+    /**
+     * Get the custom metadata stored on the object for the given file or variant
+     *
+     * @return array<string,string> Empty if the file can't be found or has no metadata
+     */
+    public function getObjectMetadata($filename, $hash, $variant = null): array
+    {
+        return $this->applyToFileOnFilesystem(
+            function (ParsedFileID $parsedFileID, Filesystem $fs) {
+                $adapter = $fs->getAdapter();
+
+                return $adapter instanceof CachedGoogleCloudStorageAdapter
+                    ? $adapter->getObjectMetadata($parsedFileID->getFileID())
+                    : [];
+            },
+            new ParsedFileID($filename, $hash, $variant)
+        ) ?: [];
     }
 
 
