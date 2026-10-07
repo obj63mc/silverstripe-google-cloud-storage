@@ -1,7 +1,7 @@
 # Example ACLS for your Bucket
 
 1. Generic ACL for full bucket - your accounts and your google service account key will have full access.
-`gsutil get acl gs://[BUCKET_NAME]`
+`gsutil acl get gs://[BUCKET_NAME]`
 
 		[
 			{
@@ -29,8 +29,8 @@
 				"role": "READER"
 			},
 			{
-				"email": "gcloud-moosylvania@appspot.gserviceaccount.com",
-			    "entity": "user-gcloud-moosylvania@appspot.gserviceaccount.com",
+				"email": "gcloud-[YOUR_ACCOUNT_NAME]@appspot.gserviceaccount.com",
+			    "entity": "user-gcloud-[YOUR_ACCOUNT_NAME]@appspot.gserviceaccount.com",
 			    "role": "OWNER"
 			}
 		]
@@ -68,8 +68,8 @@
 				"role": "READER"
 			},
 			{
-				"email": "gcloud-moosylvania@appspot.gserviceaccount.com",
-				"entity": "user-gcloud-moosylvania@appspot.gserviceaccount.com",
+				"email": "gcloud-[YOUR_ACCOUNT_NAME]@appspot.gserviceaccount.com",
+				"entity": "user-gcloud-[YOUR_ACCOUNT_NAME]@appspot.gserviceaccount.com",
 				"role": "OWNER"
 			}
 		]

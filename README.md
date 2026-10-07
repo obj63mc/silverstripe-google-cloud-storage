@@ -7,6 +7,13 @@ bucket policy for protected assets.  There is an example ACL for public/protecte
 
 This was initially based off of https://github.com/silverstripe/silverstripe-s3
 
+## Requirements
+
+* Silverstripe CMS 6
+* [league/flysystem-google-cloud-storage](https://flysystem.thephpleague.com/docs/adapter/google-cloud-storage/) 3
+
+For Silverstripe CMS 4, use the 1.x releases of this module.
+
 ## Environment setup
 
 The module requires a few environment variables to be set. These are mandatory.
@@ -17,7 +24,35 @@ The module requires a few environment variables to be set. These are mandatory.
 
 For the GC_KEY_FILE environment variable, simply copy all contents into one line and place in your .env file like -
 
-        GOOGLE_KEY_FILE={"type": "service_account","project_id": ...
+        GC_KEY_FILE={"type": "service_account","project_id": ...
+
+### Optional CDN
+
+If your bucket's public files are served through a CDN or a custom domain, set `GC_PUBLIC_CDN_PREFIX`
+and public URLs will use it instead of `https://storage.googleapis.com/[BUCKET_NAME]/public/`.
+
+        GC_PUBLIC_CDN_PREFIX="https://cdn.example.com/"
+
+A file is then linked as `https://cdn.example.com/assets/Uploads/file.jpg`. If your CDN does not
+serve files from `/assets/`, change that part of the path by redeclaring the adapter:
+
+```yaml
+---
+Name: app-gcs-cdn
+After:
+  - "#silverstripegooglecloudstorage-cdn"
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Assets\Flysystem\PublicAdapter:
+    class: SilverStripe\GoogleCloudStorage\Adapter\PublicCDNAdapter
+    constructor:
+      bucketAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\BucketAdapter'
+      prefix: "`GC_PUBLIC_BUCKET_PREFIX`"
+      visibility: null
+      mimeTypeDetector: null
+      cdnPrefix: "`GC_PUBLIC_CDN_PREFIX`"
+      cdnAssetsDir: "cms-assets" # example of a custom assets folder name
+```
 
 ## Installation
 
@@ -41,6 +76,49 @@ directly accessed.
 'public' assets are stored by default in a directory called 'public' in the root of your bucket.  If you would like to change this prefix/path simply update the environment variable of `GC_PUBLIC_BUCKET_PREFIX`.  You will want to configure this folder and any assets under it to have an ACL that anyone can read.
 
 'protected' assets are stored by default in a directory called 'protected' in the root of your bucket.  If you would like to change this prefix/path simply update the environment variable of `GC_PROTECTED_BUCKET_PREFIX`.  You will want to configure this folder to be private and only your google project admins and the account service key have admin access.
+
+Protected assets are linked to with a signed URL, which expires after 300 seconds by default. To change this:
+
+```yaml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Assets\Flysystem\ProtectedAdapter:
+    calls:
+      - [setExpiry, [3600]]
+```
+
+### Uniform bucket-level access
+
+By default the visibility of a file is set with an ACL on its object, which is what the bucket set up
+below uses. If your bucket has uniform bucket-level access enabled, objects cannot have ACLs, so access
+to the `public` folder needs to be granted with IAM, and the adapters given the matching visibility handler:
+
+```yaml
+---
+Name: app-gcs-visibility
+After:
+  - "#silverstripegooglecloudstorage-flysystem"
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Assets\Flysystem\PublicAdapter:
+    constructor:
+      visibility: '%$League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility'
+  SilverStripe\Assets\Flysystem\ProtectedAdapter:
+    constructor:
+      visibility: '%$League\Flysystem\GoogleCloudStorage\UniformBucketLevelAccessVisibility'
+```
+
+## Performance
+
+Details of each file (whether it exists, its size, type and so on) are cached to avoid a request to
+Google Cloud Storage each time they are needed. This uses the default Silverstripe cache, so for a
+site running on more than one server use a shared backend such as Memcached or Redis, as described in
+the [Silverstripe caching documentation](https://docs.silverstripe.org/en/6/developer_guides/performance/caching/).
+The cache is cleared on flush. To keep it:
+
+```yaml
+SilverStripe\GoogleCloudStorage\Adapter\CachedGoogleCloudStorageAdapter:
+  flush_enabled: false
+```
 
 ## Configuring Google Cloud Storage Bucket
 

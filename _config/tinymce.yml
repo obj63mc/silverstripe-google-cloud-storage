@@ -1,10 +1,12 @@
 ---
+Name: silverstripegooglecloudstorage-tinymce
 After:
   - '#corehtml'
+  - '#tinymce-injector'
 ---
 SilverStripe\Core\Injector\Injector:
   League\Flysystem\Filesystem.localpublic:
-    class: 'League\Flysystem\Filesystem'
+    class: 'SilverStripe\Assets\Flysystem\Filesystem'
     constructor:
       FilesystemAdapter: '%$SilverStripe\GoogleCloudStorage\Adapter\TinyMceAdapter'
       FilesystemConfig:
@@ -13,6 +15,7 @@ SilverStripe\Core\Injector\Injector:
     class: 'SilverStripe\Assets\Flysystem\GeneratedAssets'
     properties:
       Filesystem: '%$League\Flysystem\Filesystem.localpublic'
-  SilverStripe\Forms\HTMLEditor\TinyMCECombinedGenerator:
+  SilverStripe\TinyMCE\TinyMCECombinedGenerator:
+    class: SilverStripe\TinyMCE\TinyMCECombinedGenerator
     properties:
       AssetHandler: '%$LocalGeneratedAssetHandler'
